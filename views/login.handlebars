@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iniciar sesión</title>
+</head>
+<body>
+    <h1>Iniciar sesión</h1>
+    {{#if errorMessage}}
+        <p style="color: red;">{{errorMessage}}</p>
+    {{/if}}
+
+    <form action="/login" method="POST">
+        <label for="email">Correo electrónico: (adminCoder@coder.com)</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="password">Contraseña: (adminCod3r123)</label>
+        <input type="password" id="password" name="password" required><br><br>
+
+        <button type="submit">Iniciar sesión</button>
+
+        <a href="/auth/github">Iniciar sesión con GitHub</a>
+    </form>
+
+<form id="forgotPasswordForm">
+    <h5>¿Olvidaste tu contraseña?</h5>
+    <label for="email">Correo Electrónico:</label>
+    <input type="email" id="emailInput" placeholder="Ingrese su correo electrónico">
+    <button type="submit">Restablecer Contraseña</button>
+</form>
+
+<script>
+document.getElementById('forgotPasswordForm').addEventListener('submit', function(event) {
+    event.preventDefault(); 
+
+    const email = document.getElementById('emailInput').value;
+    forgotPassword(email);
+});
+
+function forgotPassword(email) {
+    fetch(`http://localhost:8080/forgot-password`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al solicitar restablecimiento de contraseña');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Respuesta del servidor:', data);
+        alert('Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña');
+    })
+    .catch(error => {
+        console.error('Error al solicitar restablecimiento de contraseña:', error);
+        alert('Error al solicitar restablecimiento de contraseña');
+    });
+}
+</script>
+
+
+        <h1>Registro</h1>
+
+    <form action="/register" method="POST">
+        <label for="registerName">Nombre:</label>
+        <input type="text" id="registerName" name="name" required><br><br>
+
+        <label for="registerLastName">Apellido:</label>
+        <input type="text" id="registerLastName" name="last_name" required><br><br>
+
+        <label for="registerEmail">Correo electrónico:</label>
+        <input type="email" id="registerEmail" name="email" required><br><br>
+
+        <label for="registerAge">Edad:</label>
+        <input type="number" id="registerAge" name="age" required><br><br>
+
+        <label for="registerPassword">Contraseña:</label>
+        <input type="password" id="registerPassword" name="password" required><br><br>
+
+        <button type="submit">Registrarse</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Carrito de Compras</title>
+    <style>
+        /* Estilos para la ventana emergente */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 2px solid black;
+            z-index: 1000;
+            width: 400px;
+            display: none; /* Inicialmente oculta */
+        }
+    </style>
+</head>
+<body>
+    <h1>Carrito de Compras</h1>
+
+    <ul id="productosCarrito">
+        {{#each user.cart.items}}
+            <li>{{this.productName}} - Cantidad: {{this.quantity}}</li>
+        {{/each}}
+    </ul>
+
+    <a href="/realTimeProducts">
+        <button>Ver Productos en Tiempo Real</button>
+    </a>
+    <a href="./carrito">
+        <button>Ver carrito</button>
+    </a>
+    <a href="/">
+        <button>Volver a la lista estática</button>
+    </a>
+    <a href="/logout">
+        <button>Cerrar sesión</button>
+    </a>
+    <button onclick="createCart()">Crear Carrito</button>
+    <button onclick="comprar()">Comprar</button>
+    
+
+    <!-- Ventana emergente -->
+    <div id="popup" class="popup">
+        <h2>Detalle del Carrito</h2>
+        <p>Comprador: <span id="comprador"></span></p>
+        <ul id="productos"></ul>
+        <p>Total: $<span id="total"></span></p>
+        <button onclick="comprar()">Comprar</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cartId = '{{cartId}}';
+            const ul = document.getElementById('productosCarrito');
+            const popup = document.getElementById('popup');
+
+            if (!ul) {
+                console.error('Elemento HTML "productosCarrito" no encontrado.');
+                return;
+            }
+
+            fetch(`/api/carts/${cartId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error en la respuesta: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(cart => {
+                    console.log('Respuesta del servidor:', cart);
+
+                    ul.innerHTML = ''; 
+
+                    if (cart && cart.length > 0) {
+                        cart.forEach(producto => {
+                            const li = document.createElement('li');
+                            li.textContent = `${producto.product} - Cantidad: ${producto.quantity}`;
+
+                            const button = document.createElement('button');
+                            button.textContent = 'Eliminar';
+
+                            button.addEventListener('click', () => {
+                                fetch(`/api/carts/${cartId}/products/${producto.product}`, {
+                                    method: 'DELETE',
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`Error en la respuesta: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(() => {
+                                    // Eliminar el elemento de la lista en el cliente
+                                    ul.removeChild(li);
+                                    console.log('Producto eliminado correctamente');
+                                })
+                                .catch(error => console.error('Error al eliminar el producto del carrito:', error));
+                            });
+
+                            li.appendChild(button);
+                            ul.appendChild(li);
+                        });
+                    } else {
+                        const p = document.createElement('p');
+                        p.textContent = 'El carrito está vacío';
+                        ul.appendChild(p);
+                    }
+                })
+                .catch(error => console.error('Error al obtener productos del carrito:', error));
+
+            // Función para mostrar la ventana emergente
+            window.showPopup = () => {
+                popup.style.display = 'block';
+            };
+
+            // Función para ocultar la ventana emergente
+            window.hidePopup = () => {
+                popup.style.display = 'none';
+            };
+        });
+
+        function createCart() {
+            const accessToken = "user";
+            fetch('http://localhost:8080/api/carts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al crear el carrito');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Carrito creado:', data);
+                alert('Carrito creado!');
+            })
+            .catch(error => {
+                console.error('Error al crear el carrito:', error);
+                alert('Error al crear el carrito');
+            });
+        }
+
+function comprar() {
+    // Obtener los datos del cliente, los productos y el precio total
+    const cliente = 'Nombre del cliente'; // Puedes obtener esto de algún formulario o de la sesión del usuario
+    const productos = obtenerProductosDelCarrito(); // Obtener los productos del carrito
+    const precioTotal = calcularPrecioTotal(productos); // Calcular el precio total de los productos
+
+    // Mostrar una ventana emergente con los datos del cliente y los productos
+    const mensaje = `Cliente: ${cliente}\n\nProductos:\n${productos}\n\nPrecio Total: ${precioTotal}`;
+    alert(mensaje);
+
+    // Confirmar la compra
+    const confirmacion = confirm('¿Confirmar compra?');
+    if (confirmacion) {
+        // Si se confirma la compra, borrar todos los productos del carrito
+        fetch(`/api/carts/${cartId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al borrar el carrito');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Carrito borrado correctamente:', data);
+            alert('Compra realizada con éxito');
+        })
+        .catch(error => {
+            console.error('Error al borrar el carrito:', error);
+            alert('Error al realizar la compra');
+        });
+    }
+}
+
+// Función para obtener los productos del carrito
+function obtenerProductosDelCarrito() {
+    // Implementa la lógica para obtener los productos del carrito aquí
+}
+
+// Función para calcular el precio total de los productos
+function calcularPrecioTotal(productos) {
+    // Implementa la lógica para calcular el precio total aquí
+}
+
+
+    </script>
+</body>
+</html>
+
+
+<!--
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const cartId = '{{cartId}}';
+    const ul = document.getElementById('productosCarrito');
+
+    if (!ul) {
+        console.error('Elemento HTML "productosCarrito" no encontrado.');
+        return;
+    }
+
+    fetch(`/api/carts/${cartId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error en la respuesta: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(cart => {
+            console.log('Respuesta del servidor:', cart);
+
+            ul.innerHTML = ''; 
+
+            if (cart && cart.length > 0) {
+                cart.forEach(producto => {
+                    const li = document.createElement('li');
+                    li.textContent = `${producto.product} - Cantidad: ${producto.quantity}`;
+
+                    const form = document.createElement('form');
+                    form.action = `/carts/${cartId}/products/${producto.product}`;
+                    form.method = 'DELETE';
+
+                    const button = document.createElement('button');
+                    button.type = 'submit';
+                    button.textContent = 'Eliminar';
+
+                    form.appendChild(button);
+                    li.appendChild(form);
+                    ul.appendChild(li);
+                });
+            } else {
+                const p = document.createElement('p');
+                p.textContent = 'El carrito está vacío';
+                ul.appendChild(p);
+            }
+        })
+        .catch(error => console.error('Error al obtener productos del carrito:', error));
+});
+
+
+</script>  
+-->
